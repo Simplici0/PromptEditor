@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zen Prompt Editor 3.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- CodeMirror CSS desde CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #fafafa;
+            --text-color: #1a1a1a;
+            --border-color: #e0e0e0;
+            --toolbar-color: #666;
+            --accent-color: #2c2c2c;
+            --button-bg: #f5f5f5;
+            --button-text: #333;
+            --modal-bg: rgba(0, 0, 0, 0.5);
+            --transition-speed: 0.2s;
+            --sidebar-width: 280px;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0a0a0a;
+            --text-color: #e5e5e5;
+            --border-color: #2a2a2a;
+            --toolbar-color: #a3a3a3;
+            --accent-color: #e5e5e5;
+            --button-bg: #1a1a1a;
+            --button-text: #e5e5e5;
+            --modal-bg: rgba(0, 0, 0, 0.8);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color var(--transition-speed);
+            display: flex;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-color);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: all var(--transition-speed);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem 1.25rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.05em;
+            text-transform: lowercase;
+        }
+
+        .search-box {
+            padding: 0.75rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background: var(--button-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--text-color);
+            font-family: 'Roboto Mono', monospace;
+            transition: border-color var(--transition-speed);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .search-box input::placeholder {
+            color: var(--toolbar-color);
+        }
+
+        .prompts-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .prompt-item {
+            padding: 0.75rem;
+            margin-bottom: 0.25rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            border: 1px solid transparent;
+        }
+
+        .prompt-item:hover {
+            background-color: var(--button-bg);
+            border-color: var(--border-color);
+        }
+
+        .prompt-item.active {
+            background-color: var(--button-bg);
+            border-color: var(--accent-color);
+        }
+
+        .prompt-item-title {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .prompt-item-preview {
+            font-size: 0.7rem;
+            color: var(--toolbar-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .sidebar-footer button {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-color);
+            font-size: 0.7rem;
+            font-family: 'Roboto Mono', monospace;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all var(--transition-speed);
+        }
+
+        .sidebar-footer button:hover {
+            background: var(--button-bg);
+            border-color: var(--accent-color);
+        }
+
+        /* Main Container */
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all var(--transition-speed);
+        }
+
+        .logo {
+            font-size: 0.875rem;
+            font-weight: 400;
+            color: var(--text-color);
+            letter-spacing: 0.05em;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .toolbar button {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .toolbar button:hover {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border-color: var(--accent-color);
+            transform: translateY(-1px);
+        }
+
+        .toolbar button svg {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        #theme-toggle-icon-dark {
+            display: none;
+        }
+
+        /* Editor Styles */
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-wrapper {
+            flex: 1;
+            padding: 2rem;
+            overflow: auto;
+        }
+
+        .CodeMirror {
+            height: 100% !important;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            border: none;
+            background-color: transparent !important;
+        }
+
+        .CodeMirror-gutters {
+            background-color: transparent !important;
+            border: none;
+        }
+
+        .CodeMirror-linenumber {
+            color: var(--toolbar-color);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            padding: 0.75rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-color);
+            font-size: 0.75rem;
+            color: var(--toolbar-color);
+            transition: all var(--transition-speed);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-item svg {
+            width: 14px;
+            height: 14px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            opacity: 0;
+            transform: translateY(1rem);
+            transition: all var(--transition-speed);
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .notification.success {
+            background-color: #4ade80;
+        }
+
+        .notification.error {
+            background-color: #ef4444;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--modal-bg);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            min-width: 400px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--toolbar-color);
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all var(--transition-speed);
+        }
+
+        .modal-close:hover {
+            background-color: var(--button-bg);
+            color: var(--text-color);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .modal-footer button {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+
+        .primary-button {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+
+        .primary-button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .secondary-button {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: 1px solid var(--border-color);
+        }
+
+        .secondary-button:hover {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.875rem;
+            transition: border-color var(--transition-speed);
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .saved-prompt-item,
+        .template-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background-color: var(--button-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            transition: all var(--transition-speed);
+        }
+
+        .saved-prompt-item:hover,
+        .template-item:hover {
+            border-color: var(--accent-color);
+            transform: translateX(3px);
+        }
+
+        .prompt-info h3,
+        .template-name {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--text-color);
+        }
+
+        .prompt-info p {
+            margin: 0.25rem 0 0;
+            font-size: 0.8rem;
+            color: var(--toolbar-color);
+        }
+
+        .prompt-actions,
+        .template-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .prompt-actions button,
+        .template-actions button {
+            padding: 0.4rem 0.8rem;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            border: 1px solid var(--border-color);
+        }
+
+        .prompt-actions button:hover,
+        .template-actions button:hover {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border-color: var(--accent-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--toolbar-color);
+            font-size: 0.9rem;
+            padding: 2rem;
+        }
+
+        /* Zen Mode */
+        body.zen-mode .sidebar {
+            display: none;
+        }
+
+        body.zen-mode header {
+            border-bottom: none;
+        }
+
+        body.zen-mode .status-bar {
+            display: none;
+        }
+
+        body.zen-mode .editor-wrapper {
+            padding: 3rem 10%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .zen-mode-indicator {
+            position: fixed;
+            top: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--button-bg);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: var(--toolbar-color);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-speed);
+            z-index: 1000;
+        }
+
+        body.zen-mode .zen-mode-indicator {
+            opacity: 1;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--toolbar-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            .toolbar {
+                gap: 0.25rem;
+            }
+
+            .toolbar button {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.7rem;
+            }
+
+            .editor-wrapper {
+                padding: 1rem;
+            }
+
+            body.zen-mode .editor-wrapper {
+                padding: 2rem 5%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">prompts library</div>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="search-prompts" placeholder="search prompts...">
+        </div>
+        
+        <div class="prompts-list" id="prompts-list">
+            <!-- Prompts will be loaded here -->
+        </div>
+        
+        <div class="sidebar-footer">
+            <button id="import-btn">import</button>
+            <button id="export-btn">export</button>
+        </div>
+    </aside>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <header>
+            <div class="logo">zen prompt editor 3.0</div>
+            <div class="toolbar">
+                <button id="new-prompt">
+                    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+                    new
+                </button>
+                <button id="load-template">
+                    <svg viewBox="0 0 24 24"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg>
+                    templates
+                </button>
+                <button id="create-template">
+                    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18 2h4v4M18 6L9 15M21 3l-7 7"></path></svg>
+                    new template
+                </button>
+                <button id="load-saved">
+                    <svg viewBox="0 0 24 24"><path d="M4 19h16M4 15h16M4 11h16M4 7h16"></path></svg>
+                    saved
+                </button>
+                <button id="save-prompt">
+                    <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    save
+                </button>
+                <button id="zen-mode-toggle">
+                    <svg viewBox="0 0 24 24"><path d="M2 2h5v5H2zM9 2h5v5H9zM16 2h5v5h-5zM2 9h5v5H2zM9 9h5v5H9zM16 9h5v5h-5zM2 16h5v5H2zM9 16h5v5H9zM16 16h5v5h-5z"></path></svg>
+                    zen
+                </button>
+                <button id="theme-toggle">
+                    <svg id="theme-toggle-icon-light" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    <svg id="theme-toggle-icon-dark" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="editor-container">
+            <div class="editor-wrapper">
+                <textarea id="editor"></textarea>
+            </div>
+
+            <div class="status-bar">
+                <div class="status-item" id="char-count">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                    </svg>
+                    <span>characters: 0</span>
+                </div>
+                <div class="status-item" id="last-saved">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2v10M12 22v-3"></path>
+                        <path d="M12 14l6.3-6.3a4.5 4.5 0 00-6.3-6.3L12 1.4"></path>
+                        <path d="M12 14l-6.3-6.3a4.5 4.5 0 016.3-6.3L12 1.4"></path>
+                    </svg>
+                    <span>last saved: never</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+    <div class="zen-mode-indicator">Press Esc to exit zen mode</div>
+
+    <!-- Template Modal -->
+    <div class="modal" id="template-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Choose Template</h2>
+                <button class="modal-close" onclick="hideTemplateModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="template-list"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-template" class="secondary-button" onclick="hideTemplateModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saved Prompts Modal -->
+    <div class="modal" id="saved-prompts-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Saved Prompts</h2>
+                <button class="modal-close" onclick="hideSavedPromptsModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="saved-prompts-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Modal -->
+    <div class="modal" id="save-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Save Prompt</h2>
+                <button class="modal-close" onclick="hideSaveModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="prompt-name">Name</label>
+                    <input type="text" id="prompt-name" placeholder="Enter a name for your prompt">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-save" class="secondary-button" onclick="hideSaveModal()">Cancel</button>
+                <button id="confirm-save" class="primary-button" onclick="savePrompt()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Template Modal -->
+    <div class="modal" id="create-template-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Template</h2>
+                <button class="modal-close" onclick="hideCreateTemplateModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="template-name">Template Name</label>
+                    <input type="text" id="template-name" placeholder="Enter template name">
+                </div>
+                <div class="form-group">
+                    <label for="template-content">Template Content</label>
+                    <textarea id="template-content" placeholder="Enter template content"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-template-create" class="secondary-button" onclick="hideCreateTemplateModal()">Cancel</button>
+                <button id="confirm-template-create" class="primary-button" onclick="createNewTemplate()">Create Template</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CodeMirror JS desde CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/markdown/markdown.min.js"></script>
+
+    <script>
+        let editor;
+        let currentPromptId = null;
+        let templateModal;
+        let savedPromptsModal;
+        let saveModal;
+        let createTemplateModal;
+        let autoSaveTimeout = null;
+        let isZenMode = false;
+
+        // Initialize everything when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize CodeMirror
+            editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+                mode: 'markdown',
+                theme: 'default',
+                lineNumbers: true,
+                lineWrapping: true,
+                autofocus: true,
+                extraKeys: {
+                    "Ctrl-S": function() { savePrompt(); return false; },
+                    "Cmd-S": function() { savePrompt(); return false; }
+                }
+            });
+
+            // Initialize modals
+            templateModal = document.getElementById('template-modal');
+            savedPromptsModal = document.getElementById('saved-prompts-modal');
+            saveModal = document.getElementById('save-modal');
+            createTemplateModal = document.getElementById('create-template-modal');
+
+            // Load theme preference
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            updateThemeIcons(savedTheme);
+
+            // Setup event listeners
+            setupEventListeners();
+
+            // Load prompts list
+            loadPromptsList();
+
+            // Update char count on change
+            editor.on('change', function() {
+                updateCharCount();
+                scheduleAutoSave();
+            });
+
+            // Initial char count
+            updateCharCount();
+        });
+
+        function setupEventListeners() {
+            // Toolbar buttons
+            document.getElementById('new-prompt').addEventListener('click', createNewPrompt);
+            document.getElementById('load-template').addEventListener('click', showTemplateModal);
+            document.getElementById('create-template').addEventListener('click', showCreateTemplateModal);
+            document.getElementById('load-saved').addEventListener('click', showSavedPromptsModal);
+            document.getElementById('save-prompt').addEventListener('click', showSaveModal);
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            document.getElementById('zen-mode-toggle').addEventListener('click', toggleZenMode);
+
+            // Sidebar buttons
+            document.getElementById('import-btn').addEventListener('click', importPrompts);
+            document.getElementById('export-btn').addEventListener('click', exportPrompts);
+
+            // Search
+            document.getElementById('search-prompts').addEventListener('input', function(e) {
+                filterPrompts(e.target.value);
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // ESC to exit zen mode
+                if (e.key === 'Escape' && isZenMode) {
+                    toggleZenMode();
+                }
+
+                // Ctrl/Cmd + \ for zen mode
+                if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
+                    e.preventDefault();
+                    toggleZenMode();
+                }
+            });
+
+            // Enter key in save modal
+            document.getElementById('prompt-name').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    savePrompt();
+                }
+            });
+
+            // Enter key in template modal
+            document.getElementById('template-name').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('template-content').focus();
+                }
+            });
+        }
+
+        // Notification function
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Modal functions
+        function showTemplateModal() {
+            templateModal.classList.add('active');
+            loadTemplates();
+        }
+
+        function hideTemplateModal() {
+            templateModal.classList.remove('active');
+        }
+
+        function showSavedPromptsModal() {
+            savedPromptsModal.classList.add('active');
+            loadSavedPrompts();
+        }
+
+        function hideSavedPromptsModal() {
+            savedPromptsModal.classList.remove('active');
+        }
+
+        function showSaveModal() {
+            saveModal.classList.add('active');
+            document.getElementById('prompt-name').focus();
+            
+            // Pre-fill with current prompt name if editing
+            if (currentPromptId) {
+                const prompts = JSON.parse(localStorage.getItem('prompts') || '[]');
+                const prompt = prompts.find(p => p.id === currentPromptId);
+                if (prompt) {
+                    document.getElementById('prompt-name').value = prompt.name;
+                }
+            } else {
+                document.getElementById('prompt-name').value = '';
+            }
+        }
+
+        function hideSaveModal() {
+            saveModal.classList.remove('active');
+        }
+
+        function showCreateTemplateModal() {
+            createTemplateModal.classList.add('active');
+            document.getElementById('template-name').focus();
+            
+            // Pre-fill with selected text if any
+            const selectedText = editor.getSelection();
+            if (selectedText) {
+                document.getElementById('template-content').value = selectedText;
+            } else {
+                document.getElementById('template-content').value = '';
+            }
+            document.getElementById('template-name').value = '';
+        }
+
+        function hideCreateTemplateModal() {
+            createTemplateModal.classList.remove('active');
+            document.getElementById('template-name').value = '';
+            document.getElementById('template-content').value = '';
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            const body = document.body;
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            updateThemeIcons(newTheme);
+            localStorage.setItem('theme', newTheme);
+            showNotification(`${newTheme} mode activated`);
+        }
+
+        function updateThemeIcons(theme) {
+            const lightIcon = document.getElementById('theme-toggle-icon-light');
+            const darkIcon = document.getElementById('theme-toggle-icon-dark');
+            if (theme === 'dark') {
+                lightIcon.style.display = 'none';
+                darkIcon.style.display = 'inline';
+            } else {
+                lightIcon.style.display = 'inline';
+                darkIcon.style.display = 'none';
+            }
+        }
+
+        // Zen Mode
+        function toggleZenMode() {
+            isZenMode = !isZenMode;
+            document.body.classList.toggle('zen-mode', isZenMode);
+            
+            if (isZenMode) {
+                editor.focus();
+                showNotification('Zen mode activated (Esc to exit)');
+            } else {
+                showNotification('Zen mode deactivated');
+            }
+        }
+
+        // UI update functions
+        function updateCharCount() {
+            const count = editor.getValue().length;
+            const charCountEl = document.getElementById('char-count');
+            charCountEl.querySelector('span').textContent = `characters: ${count}`;
+        }
+
+        function updateLastSaved(date) {
+            const text = date ? `last saved: ${date.toLocaleTimeString()}` : 'last saved: never';
+            document.getElementById('last-saved').querySelector('span').textContent = text;
+        }
+
+        // Auto-save
+        function scheduleAutoSave() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                if (currentPromptId) {
+                    autoSaveCurrentPrompt();
+                }
+            }, 2000);
+        }
+
+        function autoSaveCurrentPrompt() {
+            if (!currentPromptId) return;
+
+            const prompts = JSON.parse(localStorage.getItem('prompts') || '[]');
+            const index = prompts.findIndex(p => p.id === currentPromptId);
+            
+            if (index !== -1) {
+                prompts[index].content = editor.getValue();
+                prompts[index].modified = new Date().toISOString();
+                localStorage.setItem('prompts', JSON.stringify(prompts));
+                updateLastSaved(new Date());
+                loadPromptsList();
+            }
+        }
+
+        // Template management
+        function loadTemplates() {
+            const templates = JSON.parse(localStorage.getItem('templates') || '[]');
+            const templateList = document.getElementById('template-list');
+            
+            templateList.innerHTML = templates.length ? templates.map(t => {
+                return `<div class="template-item">
+                    <div class="template-name">${escapeHtml(t.name)}</div>
+                    <div class="template-actions">
+                        <button onclick="loadTemplate('${t.id}')">Load</button>
+                        <button onclick="deleteTemplate('${t.id}')">Delete</button>
+                    </div>
+                </div>`;
+            }).join('') : '<div class="empty-state">No templates available</div>';
+        }
+
+        function loadTemplate(id) {
+            const templates = JSON.parse(localStorage.getItem('templates') || '[]');
+            const template = templates.find(t => t.id === id);
+            if (template) {
+                editor.setValue(template.content);
+                hideTemplateModal();
+                showNotification('Template loaded successfully', 'success');
+            }
+        }
+
+        function deleteTemplate(id) {
+            if (!confirm('Are you sure you want to delete this template?')) return;
+            
+            let templates = JSON.parse(localStorage.getItem('templates') || '[]');
+            templates = templates.filter(t => t.id !== id);
+            localStorage.setItem('templates', JSON.stringify(templates));
+            loadTemplates();
+            showNotification('Template deleted', 'success');
+        }
+
+        function createNewTemplate() {
+            const name = document.getElementById('template-name').value.trim();
+            const content = document.getElementById('template-content').value.trim();
+            
+            if (!name) {
+                showNotification('Template name is required', 'error');
+                return;
+            }
+            
+            if (!content) {
+                showNotification('Template content is required', 'error');
+                return;
+            }
+            
+            const templates = JSON.parse(localStorage.getItem('templates') || '[]');
+            const newTemplate = {
+                id: Date.now().toString(),
+                name: name,
+                content: content,
+                created: new Date().toISOString()
+            };
+            
+            templates.push(newTemplate);
+            localStorage.setItem('templates', JSON.stringify(templates));
+            
+            hideCreateTemplateModal();
+            showNotification('Template created successfully', 'success');
+        }
+
+        // Prompt management
+        function createNewPrompt() {
+            // Save current prompt if exists
+            if (currentPromptId) {
+                autoSaveCurrentPrompt();
+            }
+            
+            // Clear editor
+            editor.setValue('');
+            currentPromptId = null;
+            updateLastSaved(null);
+            showNotification('New prompt created');
+            
+            // Clear active state
+            loadPromptsList();
+        }
+
+        function loadSavedPrompts() {
+            const prompts = JSON.parse(localStorage.getItem('prompts') || '[]');
+            const promptsList = document.getElementById('saved-prompts-list');
+            
+            promptsList.innerHTML = prompts.length ? prompts.map(p => `
+                <div class="saved-prompt-item">
+                    <div class="prompt-info">
+                        <h3>${escapeHtml(p.name)}</h3>
+                        <p>Created: ${new Date(p.created).toLocaleDateString()}</p>
+                    </div>
+                    <div class="prompt-actions">
+                        <button onclick="loadPromptFromModal('${p.id}')">Load</button>
+                        <button onclick="deletePrompt('${p.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('') : '<div class="empty-state">No saved prompts</div>';
+        }
+
+        function loadPromptFromModal(id) {
+            loadPrompt(id);
+            hideSavedPromptsModal();
+        }
+
+        function loadPrompt(id) {
+            const prompts = JSON.parse(localStorage.getItem('prompts') || '[]');
+            const prompt = prompts.find(p => p.id === id);
+            if (prompt) {
+                editor.setValue(prompt.content);
+                currentPromptId = prompt.id;
+                showNotification('Prompt loaded successfully', 'success');
+                updateLastSaved(new Date(prompt.modified));
+                loadPromptsList();
+            }
+        }
+
+        function savePrompt() {
+            const name = document.getElementById('prompt-name').value.trim();
+            if (!name) {
+                showNotification('Please enter a name for your prompt', 'error');
+                return;
+            }
+
+            const content = editor.getValue();
+            const prompts = JSON.parse(localStorage.getItem('prompts') || '[]');
+            const now = new Date();
+            
+            if (currentPromptId) {
+                // Update existing prompt
+                const index = prompts.findIndex(p => p.id === currentPromptId);
+                if (index !== -1) {
+                    prompts[index] = {
+                        ...prompts[index],
+                        name: name,
+                        content: content,
+                        modified: now.toISOString()
+                    };
+                }
+            } else {
+                // Create new prompt
+                const newPrompt = {
+                    id: Date.now().toString(),
+                    name: name,
+                    content: content,
+                    created: now.toISOString(),
+                    modified: now.toISOString()
+                };
+                prompts.unshift(newPrompt);
+                currentPromptId = newPrompt.id;
+            }
+            
+            localStorage.setItem('prompts', JSON.stringify(prompts));
+            hideSaveModal();
+            showNotification('Prompt saved successfully', 'success');
+            updateLastSaved(now);
+            loadPromptsList();
+        }
+
+        function deletePrompt(id) {
+            if (!confirm('Are you sure you want to delete this prompt?')) return;
+            
+            let prompts = JSON.parse(localStorage.getItem('prompts') || '[]');
+            prompts = prompts.filter(p => p.id !== id);
+            localStorage.setItem('prompts', JSON.stringify(prompts));
+            
+            if (currentPromptId === id) {
+                createNewPrompt();
+            }
+            
+            loadSavedPrompts();
+            loadPromptsList();
+            showNotification('Prompt deleted', 'success');
+        }
+
+        // Sidebar prompts list
+        function loadPromptsList() {
+            const prompts = JSON.parse(localStorage.getItem('prompts') || '[]');
+            const promptsList = document.getElementById('prompts-list');
+            
+            if (prompts.length === 0) {
+                promptsList.innerHTML = '<div class="empty-state">No prompts yet<br><small>Click "new" to create one</small></div>';
+                return;
+            }
+            
+            promptsList.innerHTML = prompts.map(p => {
+                const preview = p.content.substring(0, 50).replace(/\n/g, ' ');
+                const isActive = currentPromptId === p.id;
+                return `
+                    <div class="prompt-item ${isActive ? 'active' : ''}" onclick="loadPrompt('${p.id}')">
+                        <div class="prompt-item-title">${escapeHtml(p.name)}</div>
+                        <div class="prompt-item-preview">${escapeHtml(preview)}${p.content.length > 50 ? '...' : ''}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterPrompts(searchTerm) {
+            const prompts = JSON.parse(localStorage.getItem('prompts') || '[]');
+            const promptsList = document.getElementById('prompts-list');
+            
+            if (!searchTerm.trim()) {
+                loadPromptsList();
+                return;
+            }
+            
+            const filtered = prompts.filter(p => 
+                p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.content.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            
+            if (filtered.length === 0) {
+                promptsList.innerHTML = '<div class="empty-state">No prompts found</div>';
+                return;
+            }
+            
+            promptsList.innerHTML = filtered.map(p => {
+                const preview = p.content.substring(0, 50).replace(/\n/g, ' ');
+                const isActive = currentPromptId === p.id;
+                return `
+                    <div class="prompt-item ${isActive ? 'active' : ''}" onclick="loadPrompt('${p.id}')">
+                        <div class="prompt-item-title">${escapeHtml(p.name)}</div>
+                        <div class="prompt-item-preview">${escapeHtml(preview)}${p.content.length > 50 ? '...' : ''}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Import/Export
+        function exportPrompts() {
+            const prompts = JSON.parse(localStorage.getItem('prompts') || '[]');
+            const templates = JSON.parse(localStorage.getItem('templates') || '[]');
+            
+            if (prompts.length === 0 && templates.length === 0) {
+                showNotification('No data to export', 'error');
+                return;
+            }
+            
+            const data = { prompts, templates };
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `zen-prompts-backup-${new Date().getTime()}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showNotification('Data exported successfully', 'success');
+        }
+
+        function importPrompts() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        
+                        let imported = 0;
+                        
+                        if (data.prompts && Array.isArray(data.prompts)) {
+                            const existingPrompts = JSON.parse(localStorage.getItem('prompts') || '[]');
+                            const mergedPrompts = [...data.prompts, ...existingPrompts];
+                            localStorage.setItem('prompts', JSON.stringify(mergedPrompts));
+                            imported += data.prompts.length;
+                        }
+                        
+                        if (data.templates && Array.isArray(data.templates)) {
+                            const existingTemplates = JSON.parse(localStorage.getItem('templates') || '[]');
+                            const mergedTemplates = [...data.templates, ...existingTemplates];
+                            localStorage.setItem('templates', JSON.stringify(mergedTemplates));
+                            imported += data.templates.length;
+                        }
+                        
+                        if (imported > 0) {
+                            loadPromptsList();
+                            showNotification(`${imported} items imported successfully`, 'success');
+                        } else {
+                            showNotification('No valid data found in file', 'error');
+                        }
+                    } catch (error) {
+                        showNotification('Error importing file: ' + error.message, 'error');
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+
+        // Utility
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
