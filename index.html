@@ -260,6 +260,7 @@
             line-height: 1.6;
             border: none;
             background-color: transparent !important;
+            color: var(--text-color) !important;
         }
 
         .CodeMirror-gutters {
@@ -268,7 +269,26 @@
         }
 
         .CodeMirror-linenumber {
-            color: var(--toolbar-color);
+            color: var(--toolbar-color) !important;
+        }
+
+        /* CodeMirror cursor color */
+        .CodeMirror-cursor {
+            border-left-color: var(--text-color) !important;
+        }
+
+        /* CodeMirror selected text */
+        .CodeMirror-selected {
+            background-color: var(--border-color) !important;
+        }
+
+        /* Asegurar que el texto se vea en modo oscuro */
+        [data-theme="dark"] .CodeMirror {
+            color: #e5e5e5 !important;
+        }
+
+        [data-theme="dark"] .CodeMirror-cursor {
+            border-left-color: #e5e5e5 !important;
         }
 
         /* Status Bar */
@@ -555,9 +575,12 @@
         }
 
         body.zen-mode .editor-wrapper {
-            padding: 3rem 10%;
-            max-width: 1000px;
-            margin: 0 auto;
+            padding: 2rem 15%;
+        }
+
+        body.zen-mode .CodeMirror {
+            font-size: 1rem;
+            line-height: 1.8;
         }
 
         .zen-mode-indicator {
@@ -620,7 +643,7 @@
             }
 
             body.zen-mode .editor-wrapper {
-                padding: 2rem 5%;
+                padding: 1.5rem 8%;
             }
         }
     </style>
