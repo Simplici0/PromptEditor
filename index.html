@@ -33,19 +33,20 @@
         }
 
         [data-theme="dark"] {
-            --bg-color: #1f2023;
-            --surface-color: #2b2d30;
-            --elevated-surface: #32363f;
-            --text-color: #d7dae0;
-            --border-color: #3f434d;
-            --toolbar-color: #9aa1ae;
-            --accent-color: #4c9fff;
-            --button-bg: #32363f;
-            --button-text: #d7dae0;
-            --modal-bg: rgba(10, 11, 13, 0.78);
-            --selection-color: rgba(76, 159, 255, 0.28);
-            --success-color: #3fb950;
-            --error-color: #f85149;
+            /* JetBrains-inspired dark palette tuned for better readability */
+            --bg-color: #1e1f22;
+            --surface-color: #2b2d31;
+            --elevated-surface: #353942;
+            --text-color: #eceff4;
+            --border-color: #4c5263;
+            --toolbar-color: #bcc5d6;
+            --accent-color: #6ea8fe;
+            --button-bg: #3d4350;
+            --button-text: #eef2f9;
+            --modal-bg: rgba(9, 10, 12, 0.82);
+            --selection-color: rgba(110, 168, 254, 0.32);
+            --success-color: #4cc26f;
+            --error-color: #ff6b6b;
         }
 
         * {
@@ -281,6 +282,37 @@
 
         .CodeMirror-linenumber {
             color: var(--toolbar-color) !important;
+        }
+
+        [data-theme="dark"] .CodeMirror {
+            color: #eff3fb !important;
+        }
+
+        [data-theme="dark"] .CodeMirror-linenumber {
+            color: #98a3b8 !important;
+        }
+
+        /* Improve Markdown token contrast in dark mode */
+        [data-theme="dark"] .cm-header,
+        [data-theme="dark"] .cm-formatting-header {
+            color: #ffd580 !important;
+        }
+
+        [data-theme="dark"] .cm-strong {
+            color: #f6f8ff !important;
+        }
+
+        [data-theme="dark"] .cm-em {
+            color: #cdd6f4 !important;
+        }
+
+        [data-theme="dark"] .cm-link,
+        [data-theme="dark"] .cm-url {
+            color: #8cc8ff !important;
+        }
+
+        [data-theme="dark"] .cm-quote {
+            color: #b7c0d4 !important;
         }
 
         /* CodeMirror cursor color */
