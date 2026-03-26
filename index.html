@@ -1007,15 +1007,22 @@
 
         // Zen Mode
         function toggleZenMode() {
+            const cursor = editor.getCursor();
+            const selection = editor.listSelections();
+            const scrollInfo = editor.getScrollInfo();
             isZenMode = !isZenMode;
             document.body.classList.toggle('zen-mode', isZenMode);
-            
-            if (isZenMode) {
+
+            // Recalculate editor layout and restore cursor/selection context after DOM resize.
+            requestAnimationFrame(() => {
+                editor.refresh();
+                editor.setSelections(selection);
+                editor.setCursor(cursor);
+                editor.scrollTo(scrollInfo.left, scrollInfo.top);
                 editor.focus();
-                showNotification('Zen mode activated (Esc to exit)');
-            } else {
-                showNotification('Zen mode deactivated');
-            }
+            });
+
+            showNotification(isZenMode ? 'Zen mode activated (Esc to exit)' : 'Zen mode deactivated');
         }
 
         // UI update functions
