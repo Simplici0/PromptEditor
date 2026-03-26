@@ -15,27 +15,37 @@
     
     <style>
         :root {
-            --bg-color: #fafafa;
-            --text-color: #1a1a1a;
-            --border-color: #e0e0e0;
-            --toolbar-color: #666;
-            --accent-color: #2c2c2c;
-            --button-bg: #f5f5f5;
-            --button-text: #333;
-            --modal-bg: rgba(0, 0, 0, 0.5);
+            --bg-color: #f5f7fa;
+            --surface-color: #ffffff;
+            --elevated-surface: #edf1f7;
+            --text-color: #1f2329;
+            --border-color: #d6dbe6;
+            --toolbar-color: #6a7280;
+            --accent-color: #3574f0;
+            --button-bg: #edf2fb;
+            --button-text: #1f2329;
+            --modal-bg: rgba(31, 35, 41, 0.45);
+            --selection-color: rgba(53, 116, 240, 0.22);
+            --success-color: #2ea043;
+            --error-color: #cf222e;
             --transition-speed: 0.2s;
             --sidebar-width: 280px;
         }
 
         [data-theme="dark"] {
-            --bg-color: #0a0a0a;
-            --text-color: #e5e5e5;
-            --border-color: #2a2a2a;
-            --toolbar-color: #a3a3a3;
-            --accent-color: #e5e5e5;
-            --button-bg: #1a1a1a;
-            --button-text: #e5e5e5;
-            --modal-bg: rgba(0, 0, 0, 0.8);
+            --bg-color: #1f2023;
+            --surface-color: #2b2d30;
+            --elevated-surface: #32363f;
+            --text-color: #d7dae0;
+            --border-color: #3f434d;
+            --toolbar-color: #9aa1ae;
+            --accent-color: #4c9fff;
+            --button-bg: #32363f;
+            --button-text: #d7dae0;
+            --modal-bg: rgba(10, 11, 13, 0.78);
+            --selection-color: rgba(76, 159, 255, 0.28);
+            --success-color: #3fb950;
+            --error-color: #f85149;
         }
 
         * {
@@ -57,7 +67,7 @@
         /* Sidebar Styles */
         .sidebar {
             width: var(--sidebar-width);
-            background-color: var(--bg-color);
+            background-color: var(--surface-color);
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
@@ -86,7 +96,7 @@
         .search-box input {
             width: 100%;
             padding: 0.5rem 0.75rem;
-            background: var(--button-bg);
+            background: var(--elevated-surface);
             border: 1px solid var(--border-color);
             border-radius: 4px;
             font-size: 0.8rem;
@@ -98,6 +108,7 @@
         .search-box input:focus {
             outline: none;
             border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--selection-color);
         }
 
         .search-box input::placeholder {
@@ -158,7 +169,7 @@
             flex: 1;
             padding: 0.5rem;
             border: 1px solid var(--border-color);
-            background: transparent;
+            background: var(--surface-color);
             color: var(--text-color);
             font-size: 0.7rem;
             font-family: 'Roboto Mono', monospace;
@@ -168,7 +179,7 @@
         }
 
         .sidebar-footer button:hover {
-            background: var(--button-bg);
+            background: var(--elevated-surface);
             border-color: var(--accent-color);
         }
 
@@ -181,7 +192,7 @@
 
         /* Header Styles */
         header {
-            background-color: var(--bg-color);
+            background-color: var(--surface-color);
             border-bottom: 1px solid var(--border-color);
             padding: 1rem 1.5rem;
             display: flex;
@@ -206,7 +217,7 @@
         .toolbar button {
             padding: 0.5rem 1rem;
             border: 1px solid var(--border-color);
-            background-color: var(--button-bg);
+            background-color: var(--elevated-surface);
             color: var(--button-text);
             font-family: 'Roboto Mono', monospace;
             font-size: 0.75rem;
@@ -220,7 +231,7 @@
 
         .toolbar button:hover {
             background-color: var(--accent-color);
-            color: var(--bg-color);
+            color: #ffffff;
             border-color: var(--accent-color);
             transform: translateY(-1px);
         }
@@ -279,17 +290,9 @@
 
         /* CodeMirror selected text */
         .CodeMirror-selected {
-            background-color: var(--border-color) !important;
+            background-color: var(--selection-color) !important;
         }
 
-        /* Asegurar que el texto se vea en modo oscuro */
-        [data-theme="dark"] .CodeMirror {
-            color: #e5e5e5 !important;
-        }
-
-        [data-theme="dark"] .CodeMirror-cursor {
-            border-left-color: #e5e5e5 !important;
-        }
 
         /* Status Bar */
         .status-bar {
@@ -298,7 +301,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: var(--bg-color);
+            background-color: var(--surface-color);
             font-size: 0.75rem;
             color: var(--toolbar-color);
             transition: all var(--transition-speed);
@@ -327,7 +330,7 @@
             right: 2rem;
             padding: 1rem 1.5rem;
             background-color: var(--accent-color);
-            color: var(--bg-color);
+            color: #ffffff;
             border-radius: 4px;
             font-size: 0.875rem;
             opacity: 0;
@@ -343,11 +346,11 @@
         }
 
         .notification.success {
-            background-color: #4ade80;
+            background-color: var(--success-color);
         }
 
         .notification.error {
-            background-color: #ef4444;
+            background-color: var(--error-color);
         }
 
         /* Modal Styles */
@@ -369,7 +372,7 @@
         }
 
         .modal-content {
-            background-color: var(--bg-color);
+            background-color: var(--surface-color);
             border: 1px solid var(--border-color);
             border-radius: 4px;
             min-width: 400px;
@@ -410,7 +413,7 @@
         }
 
         .modal-close:hover {
-            background-color: var(--button-bg);
+            background-color: var(--elevated-surface);
             color: var(--text-color);
         }
 
@@ -440,7 +443,7 @@
 
         .primary-button {
             background-color: var(--accent-color);
-            color: var(--bg-color);
+            color: #ffffff;
         }
 
         .primary-button:hover {
@@ -449,14 +452,14 @@
         }
 
         .secondary-button {
-            background-color: var(--button-bg);
+            background-color: var(--elevated-surface);
             color: var(--button-text);
             border: 1px solid var(--border-color);
         }
 
         .secondary-button:hover {
             background-color: var(--accent-color);
-            color: var(--bg-color);
+            color: #ffffff;
         }
 
         .form-group {
@@ -476,7 +479,7 @@
             padding: 0.625rem;
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            background-color: var(--button-bg);
+            background-color: var(--elevated-surface);
             color: var(--text-color);
             font-family: 'Roboto Mono', monospace;
             font-size: 0.875rem;
@@ -487,6 +490,7 @@
         .form-group textarea:focus {
             outline: none;
             border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--selection-color);
         }
 
         .form-group textarea {
@@ -501,7 +505,7 @@
             align-items: center;
             padding: 1rem;
             margin-bottom: 0.5rem;
-            background-color: var(--button-bg);
+            background-color: var(--elevated-surface);
             border: 1px solid var(--border-color);
             border-radius: 4px;
             transition: all var(--transition-speed);
@@ -538,7 +542,7 @@
             padding: 0.4rem 0.8rem;
             border: none;
             border-radius: 4px;
-            background-color: var(--button-bg);
+            background-color: var(--elevated-surface);
             color: var(--button-text);
             font-family: 'Roboto Mono', monospace;
             font-size: 0.8rem;
@@ -550,7 +554,7 @@
         .prompt-actions button:hover,
         .template-actions button:hover {
             background-color: var(--accent-color);
-            color: var(--bg-color);
+            color: #ffffff;
             border-color: var(--accent-color);
         }
 
@@ -588,7 +592,7 @@
             top: 1.5rem;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--button-bg);
+            background: var(--elevated-surface);
             border: 1px solid var(--border-color);
             padding: 0.5rem 1rem;
             border-radius: 20px;
@@ -615,7 +619,7 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
+            background: var(--toolbar-color);
             border-radius: 3px;
         }
 
